@@ -108,10 +108,7 @@ app.get("/json", function (req, res) {
       lastRow = row;
     })
     .on('done',(error)=>{
-      res.send({
-        json: json,
-        raw: rows
-      });
+      res.send(json);
     })
   
   
