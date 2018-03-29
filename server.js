@@ -10,15 +10,25 @@ const csv=require('csvtojson')
 
 
 
-const SRC = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQj6n-EOQGbCibyh9o3_2jnESi2cDw_lCTDjPNfNg680rqXrIsGaKCEKog5FSWYyohGxH7C8hHy3ZgZ/pub?output=csv';
-
+function getSrc(id){
+  return 'https://docs.google.com/spreadsheets/d/e/' + id + '/pub?output=csv';
+}
 
 
 // we've started you off with Express, 
 // but feel free to use whatever libs or frameworks you'd like through `package.json`.
 
 // http://expressjs.com/en/starter/static-files.html
+
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
+
 app.use(express.static('public'));
+
 
 // http://expressjs.com/en/starter/basic-routing.html
 app.get("/", function (request, response) {
@@ -41,6 +51,10 @@ app.get("/json", function (req, res) {
   var langs = [];
   
   var json = {};
+  
+  
+  var src = getSrc(req.query.id); 
+  
   
   function addLang(lng){
     if (typeof json[lng] === 'undefined'){
@@ -88,7 +102,7 @@ app.get("/json", function (req, res) {
   }
   
   csv()
-    .fromStream(request.get(SRC))
+    .fromStream(request.get(src))
     .on('header',(header)=>{
       headers = header;
       headers.forEach((name) => {
@@ -114,18 +128,62 @@ app.get("/json", function (req, res) {
   
 });
 
-// could also use the POST body instead of query string: http://expressjs.com/en/api.html#req.body
-app.post("/dreams", function (request, response) {
-  dreams.push(request.query.dream);
-  response.sendStatus(200);
+
+app.get("/jsonx", function (req, res) {
+  var headers;
+  var rows = [];
+  var json = {};
+  
+  
+  /*
+    - Skip Reprompts
+    - only Dialogs
+  */
+  var Dialog = class {
+    constructor() {
+      this.id = 0;
+      this.dialogs = [];
+      this.actions = [];
+    };
+    
+    bar() {
+      return "Hello World!";
+    }
+    
+    toJson(){
+    }
+  };
+  
+  let currentDialog;
+  function processRow(data) {
+    //descide if add to current dialog or open a new one
+  }
+  
+  
+  var src = getSrc(req.query.id); 
+  
+  csv()
+    .fromStream(request.get(src))
+    .on('header',(header)=>{
+      headers = header;
+    })
+    .on('csv',(csvRow)=>{
+      // csvRow is an array
+      var row = {};
+      csvRow.forEach((item, index) => {
+        row[headers[index]] = item;
+      });
+      rows.push(row);
+      //addText(row);
+      //lastRow = row;
+    })
+    .on('done',(error)=>{
+      res.send(rows);
+    })
+  
+  
 });
 
-// Simple in-memory store for now
-var dreams = [
-  "Find and count some sheep",
-  "Climb a really tall mountain",
-  "Wash the dishes"
-];
 
 // listen for requests :)
 var listener = app.listen(process.env.PORT, function () {
