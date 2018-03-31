@@ -132,7 +132,10 @@ app.get("/json", function (req, res) {
 app.get("/jsonx", function (req, res) {
   var headers;
   var rows = [];
-  var json = {};
+  var json = {
+    dialogs: [],
+    rows: []
+  };
   
   
   /*
@@ -140,8 +143,8 @@ app.get("/jsonx", function (req, res) {
     - only Dialogs
   */
   var Dialog = class {
-    constructor() {
-      this.id = 0;
+    constructor(level) {
+      this.level = level || 0;
       this.dialogs = [];
       this.actions = [];
     };
@@ -151,12 +154,27 @@ app.get("/jsonx", function (req, res) {
     }
     
     toJson(){
+      return {
+        level: this.level,
+        dialogs: this.dialogs,
+        actions: this.actions
+      }
     }
   };
   
-  let currentDialog;
+  let lastLevel = '';
+  let currentDialog = new Dialog(0);
   function processRow(data) {
     //descide if add to current dialog or open a new one
+    if (lastLevel === data.level){
+        
+    } else {
+      //initialize new level
+      let level = parseInt(data.level);
+      json.dialogs.push(currentDialog.toJson());
+      currentDialog = new Dialog(level);
+      lastLevel = data.level;
+    }
   }
   
   
@@ -174,11 +192,13 @@ app.get("/jsonx", function (req, res) {
         row[headers[index]] = item;
       });
       rows.push(row);
+      processRow(row);
       //addText(row);
       //lastRow = row;
     })
     .on('done',(error)=>{
-      res.send(rows);
+      json.rows = rows;
+      res.send(json);
     })
   
   
