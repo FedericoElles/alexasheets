@@ -167,7 +167,16 @@ app.get("/jsonx", function (req, res) {
   function processRow(data) {
     //descide if add to current dialog or open a new one
     if (lastLevel === data.level){
-        
+        let parts = data.key.split(':')
+        let key = parts.shift();
+        let command = '';
+        if (parts.length){
+          command = parts.shift();
+        }
+        let param = '';
+        if (parts.length){
+          param = parts.shift();
+        }
     } else {
       //initialize new level
       let level = parseInt(data.level);
