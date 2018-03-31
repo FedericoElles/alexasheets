@@ -153,6 +153,22 @@ app.get("/jsonx", function (req, res) {
       return "Hello World!";
     }
     
+    addDialog(from, text, toLevel){
+      from = from || 'Alexa';
+      this.dialogs.push({
+        from: from,
+        text: text
+      });
+    }
+    
+    addAction(text, command, param, toLevel){
+      this.actions.push({
+        text: text,
+        action: {command: param},
+        toLevel: toLevel
+      });
+    }
+    
     toJson(){
       return {
         level: this.level,
@@ -167,22 +183,33 @@ app.get("/jsonx", function (req, res) {
   function processRow(data) {
     //descide if add to current dialog or open a new one
     if (lastLevel === data.level){
-        let parts = data.key.split(':')
-        let key = parts.shift();
-        let command = '';
-        if (parts.length){
-          command = parts.shift();
-        }
-        let param = '';
-        if (parts.length){
-          param = parts.shift();
-        }
     } else {
       //initialize new level
       let level = parseInt(data.level);
       json.dialogs.push(currentDialog.toJson());
       currentDialog = new Dialog(level);
       lastLevel = data.level;
+    }
+    //provess records:
+    let parts = data.key.split(':')
+    let key = parts.shift();
+    let command = '';
+    if (parts.length){
+      command = parts.shift();
+    }
+    let param = '';
+    if (parts.length){
+      param = parts.shift();
+    }
+
+    if (key === 'dialog' && data.reprompt === ''){
+      currentDialog.addDialog(undefined, data.text_de, data.to_level);
+    }
+
+    if (key === 'action'){
+      if (command && command === 'set' && param){
+        currentDialog.addAction(data.text_de, command, param, data.to_level);
+      }
     }
   }
   
